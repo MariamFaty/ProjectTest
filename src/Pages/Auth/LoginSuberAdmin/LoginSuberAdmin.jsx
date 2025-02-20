@@ -13,8 +13,8 @@ import {
 export default function LoginSuberAdmin() {
   return (
     <div>
-      <div className="container d-flex align-items-center justify-content-center min-vh-100">
-        <div className="card custom-card w-100 p-4">
+      <div className="container d-flex align-items-center justify-content-center ">
+        <div className="card custom-card p-4">
           <div className="row align-items-center">
             {/* صورة الجانب الأيسر */}
             <div className="col-12 col-md-6 d-flex justify-content-center">
@@ -27,7 +27,7 @@ export default function LoginSuberAdmin() {
                 <img src={Logo} alt="logo" className="img-fluid" />
               </div>
               <div className="content">
-                <h1>WELCOME SUPER ADMIN!</h1>
+                <h1 className="h3">WELCOME SUPER ADMIN!</h1>
                 <p>Access your personal account by logging in.</p>
               </div>
               <form>

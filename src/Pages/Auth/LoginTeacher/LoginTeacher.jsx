@@ -13,12 +13,12 @@ import {
 export default function LoginTeacher() {
   return (
     <div>
-      <div className="container d-flex align-items-center justify-content-center min-vh-100">
-        <div className="card custom-card w-100 p-4">
+      <div className="container d-flex align-items-center justify-content-center">
+        <div className="card custom-card p-4">
           <div className="row align-items-center">
             {/* صورة الجانب الأيسر */}
             <div className="col-12 col-md-6 d-flex justify-content-center">
-              <img src={Image} alt="image" className="w-100 img-fluid" />
+              <img src={Image} alt="image" className="w-100" />
             </div>
 
             {/* نموذج تسجيل الدخول */}
