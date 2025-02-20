@@ -1,0 +1,184 @@
+/* ضبط الحواف والتنسيق الأساسي */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.card{
+height: 90vh;
+}
+.imageLogin{
+    height: 20% !important ;
+}
+.parentImg{
+    height: 100% !important;
+}
+/* تحسين مظهر الكارد */
+.custom-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    
+    padding: 20px;
+}
+
+/* جعل الفورم متناسقًا مع جميع الأجهزة */
+form {
+    max-width: 100%;
+}
+
+/* تحسين حجم الخط والعناصر للموبايل */
+@media (max-width: 768px) {
+    .custom-card {
+        width: 95%;
+        padding: 15px;
+    }
+
+    .logo img {
+        width: 100px;
+    }
+
+    .content h1 {
+        font-size: 22px;
+    }
+
+    .content p {
+        font-size: 14px;
+    }
+
+    .form-control {
+        padding: 8px;
+        font-size: 14px;
+    }
+
+    .btn-login,
+    .btn-Back {
+        font-size: 16px;
+        padding: 8px;
+    }
+}
+
+/* تحسين التصميم أكثر على الموبايلات الصغيرة جدًا */
+@media (max-width: 480px) {
+    .logo img {
+        width: 80px;
+    }
+
+    .content h1 {
+        font-size: 20px;
+    }
+
+    .form-control {
+        font-size: 13px;
+        padding: 6px;
+    }
+
+    .btn-login,
+    .btn-Back {
+        font-size: 14px;
+        padding: 6px;
+    }
+}
+/* جعل checkbox على اليسار و "Forgot Password?" على اليمين عند الشاشات الصغيرة */
+/* جعل "Forgot Password?" على اليمين و Checkbox على اليسار عند الشاشات الصغيرة */
+@media (max-width: 576px) {
+    .d-flex.justify-content-between {
+        display: flex;
+        flex-direction: row;
+        /* الاتجاه الطبيعي */
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        /* محاذاة checkbox لليسار */
+    }
+
+    .forgot-password {
+        text-align: right;
+        white-space: nowrap;
+        /* منع نزول النص لسطر جديد */
+    }
+}
+
+/* تنسيق الحقول */
+.form-group {
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 5px;
+    font-size: 16px;
+    color: #333;
+}
+
+/* تنسيق المدخلات */
+.form-control {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #6BBBFF;
+    border-radius: 3rem;
+    outline: none;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 8px rgba(0, 91, 187, 0.5);
+}
+
+/* ضبط أيقونات المدخلات */
+.input-group-text img {
+    width: 15px;
+}
+
+/* ضبط موقع "Forgot Password?" */
+.forgot-password {
+    cursor: pointer;
+    font-weight: bold;
+}
+.d-flex.justify-content-between {
+    align-items: center !important; /* تأكد من محاذاة العناصر في المنتصف */
+}
+
+.forgot-password {
+    margin-bottom: 0; /* إزالة أي مسافة زائدة قد ترفع النص */
+    display: flex;
+    align-items: center;
+}
+
+/* زر تسجيل الدخول */
+.btn-login {
+    background-color: #00B0D8 !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+/* زر الرجوع */
+.btn-Back {
+    background-color: #0077B6 !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+/* تأثير عند تمرير الماوس */
+.btn-login:hover,
+.btn-Back:hover {
+    opacity: 0.8;
+}
