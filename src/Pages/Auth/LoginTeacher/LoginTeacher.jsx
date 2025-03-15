@@ -68,13 +68,13 @@ export default function LoginTeacher() {
   });
 
   return (
-    <div className="h-[100vh] w-full bg-gradient-to-r from-[#FFF1EB] to-[#ACE0F9] flex items-center justify-center p-4 overflow-hidden">
-      <div className="container mx-auto w-3/4 sm-w-[90%] lg:h-[90%] sm:h-auto bg-white p-8 rounded-xl shadow-lg flex flex-col md:flex-row items-center ">
+    <div className="min-h-screen w-full bg-gradient-to-r from-[#FFF1EB] to-[#ACE0F9] flex items-center justify-center p-4 overflow-hidden">
+      <div className="container mx-auto w-3/4 sm-w-[90%] lg:h-[90%] sm:h-auto bg-white p-4 rounded-xl shadow-lg flex flex-col md:flex-row items-center ">
         {/* القسم الأول - الصورة */}
-        <div className="w-full md:w-1/2 h-[100%] sm:h-full flex items-center justify-center">
+        <div className="w-full md:w-1/2 h-[100%] sm:h-full md:flex hidden items-center justify-center">
           <img
             src={Image}
-            className="w-full h-[60%] sm:h-full object-contain sm:object-cover rounded-3xl"
+            className="w-[90%] sm:h-full object-contain sm:object-cover rounded-3xl"
           />
         </div>
 
@@ -165,7 +165,7 @@ export default function LoginTeacher() {
             )}
 
             {/* Remember me & Forget password */}
-            <div className="flex items-center justify-between text-sm whitespace-nowrap gap-x-4 sm:gap-x-0">
+            <div className="flex items-center justify-between text-sm whitespace-nowrap md:gap-x-4 gap-x-1">
               <div className="flex items-center">
                 <input
                   id="remember"

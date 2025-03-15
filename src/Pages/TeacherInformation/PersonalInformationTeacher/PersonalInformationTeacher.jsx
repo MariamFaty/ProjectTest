@@ -41,7 +41,7 @@ export default function PersonalInformationTeacher() {
 
         // جلب البيانات باستخدام Axios
         const response = await axios.get(
-          "https://educredit.runasp.net/api/User/getuserbyemail",
+          "https://educredit.runasp.net/api/User/GetUserInfo",
           {
             headers: {
               "Content-Type": "application/json",

@@ -30,7 +30,7 @@ export default function Select() {
         <div className="w-[34px] h-[6px] bg-[#00B0D8] rounded mt-1 mb-6 "></div>
 
         {/* الكروت */}
-        <div className="grid mb-25 md:grid-cols-2 grid-cols-1 lg:grid-cols-4 gap-x-6 gap-y-6 w-full mt-20 overflow-y-auto">
+        <div className="grid mb-25 md:grid-cols-2 grid-cols-1 lg:grid-cols-4 gap-x-6 gap-y-6 w-full mt-20  overflow-y-auto">
           {/* Card 1 */}
           <Link
             to="LoginSuberAdmin"

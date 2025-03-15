@@ -17,6 +17,13 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 
 export default function PersonalInformation() {
+  // State to manage sidebar visibility on small screens
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Function to toggle sidebar visibility
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
   const [userData, setUserData] = useState({
     name: "",
     phoneNumber: "",
@@ -42,7 +49,7 @@ export default function PersonalInformation() {
 
         // جلب البيانات باستخدام Axios
         const response = await axios.get(
-          "https://educredit.runasp.net/api/User/getuserbyemail",
+          "https://educredit.runasp.net/api/User/GetUserInfo",
           {
             headers: {
               "Content-Type": "application/json",
@@ -91,9 +98,40 @@ export default function PersonalInformation() {
   if (error)
     return <div className="text-center p-4 text-red-500">Error: {error}</div>;
   return (
-    <div className="min-h-screen w-full bg-gradient-to-r from-[#FFF1EB] to-[#ACE0F9] flex items-center justify-center flex flex-col m ">
-      <div className="container mx-auto my-4 bg-[#EEF1F5] p-8 rounded-xl shadow-2xl flex flex-row items-stretch h-full ">
-        <div className="w-full sm:w-1/4 bg-white p-4 rounded-2xl shadow-md text-[#000000B2] h-full flex flex-col ">
+    <div className="min-h-screen w-full bg-gradient-to-r from-[#FFF1EB] to-[#ACE0F9] flex items-center justify-center flex flex-col m max-h-screen overflow-y-auto sm:overflow-y-hidden">
+      {/* Hamburger Menu Button for Small Screens */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#0077B6] text-white rounded-md focus:outline-none"
+        onClick={toggleSidebar}
+      >
+        {/* Hamburger Icon (3 horizontal lines) */}
+        <svg
+          className="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d={
+              isSidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"
+            }
+          />
+        </svg>
+      </button>
+
+      <div className="container mx-auto my-4 bg-[#EEF1F5] p-4 sm:p-8 rounded-xl shadow-2xl flex flex-col lg:flex-row items-stretch h-auto">
+        {/* Sidebar with Conditional Styling for Small Screens */}
+        <div
+          className={`w-full lg:w-1/4 bg-white p-4 rounded-2xl shadow-md text-[#000000B2] h-auto flex flex-col overflow-y-auto fixed lg:static top-0 left-0 h-full z-40 transform transition-transform duration-300 ${
+            isSidebarOpen
+              ? "translate-x-0"
+              : "-translate-x-full lg:translate-x-0"
+          }`}
+        >
           {/* الجزء العلوي - القائمة الرئيسية */}
           <div>
             <img src={LogoEdu} alt="LogoEdu" className="mb-4" />
@@ -103,12 +141,12 @@ export default function PersonalInformation() {
             <ul className="mt-4 space-y-2">
               <Link
                 to="/PersonalInformation"
-                className={`p-2 rounded-md flex items-center gap-2 cursor-pointer transition-all duration-300 space-y-1 
-    ${
-      window.location.pathname === "/PersonalInformation"
-        ? "bg-[#E6E6E6] text-[#0019BDD9]"
-        : "hover:bg-gray-200 hover:text-[#0019BDD9]"
-    }`}
+                className={`p-2 rounded-md flex items-center gap-2 cursor-pointer transition-all duration-300 
+        ${
+          window.location.pathname === "/PersonalInformation"
+            ? "bg-[#E6E6E6] text-[#0019BDD9]"
+            : "hover:bg-gray-200 hover:text-[#0019BDD9]"
+        }`}
                 onMouseEnter={(e) =>
                   (e.currentTarget.children[0].src = InformationCircle2)
                 }
@@ -118,6 +156,7 @@ export default function PersonalInformation() {
                       ? InformationCircle2
                       : InformationCircle)
                 }
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
               >
                 <img
                   src={
@@ -133,18 +172,33 @@ export default function PersonalInformation() {
 
               <Link
                 to="/EnrollOfCourses"
-                className="p-2 hover:bg-gray-200 hover:text-[#0019BDD9] rounded-md flex items-center gap-2 hover:cursor-pointer space-y-1 "
+                className={`p-2 rounded-md flex items-center gap-2 cursor-pointer transition-all duration-300 
+        ${
+          window.location.pathname === "/EnrollOfCourses"
+            ? "bg-[#E6E6E6] text-[#0019BDD9]"
+            : "hover:bg-gray-200 hover:text-[#0019BDD9]"
+        }`}
                 onMouseEnter={(e) =>
                   (e.currentTarget.children[0].src = Enroll2)
                 }
-                onMouseLeave={(e) => (e.currentTarget.children[0].src = Enroll)}
+                onMouseLeave={(e) =>
+                  (e.currentTarget.children[0].src =
+                    window.location.pathname === "/EnrollOfCourses"
+                      ? Enroll2
+                      : Enroll)
+                }
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
               >
                 <img
-                  src={Enroll}
-                  alt="enroll"
+                  src={
+                    window.location.pathname === "/EnrollOfCourses"
+                      ? Enroll2
+                      : Enroll
+                  }
+                  alt="info"
                   className="w-5 h-5 transition-all duration-300"
                 />
-                Enroll of courses
+                Enroll Of Courses
               </Link>
 
               <Link
@@ -156,6 +210,7 @@ export default function PersonalInformation() {
                 onMouseLeave={(e) =>
                   (e.currentTarget.children[0].src = StudySchedule)
                 }
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
               >
                 <img
                   src={StudySchedule}
@@ -166,13 +221,14 @@ export default function PersonalInformation() {
               </Link>
 
               <li
-                className="p-2 hover:bg-gray-200 hover:text-[#0019BDD9] rounded-md flex items-center gap-2 hover:cursor-pointer"
+                className="p-2 hover:bg-gray-200 hover:text-[#0019BDD9] rounded-2xl flex items-center gap-2 hover:cursor-pointer"
                 onMouseEnter={(e) =>
                   (e.currentTarget.children[0].src = ExamSchedule2)
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.children[0].src = ExamSchedule)
                 }
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
               >
                 <img
                   src={ExamSchedule}
@@ -183,11 +239,12 @@ export default function PersonalInformation() {
               </li>
 
               <li
-                className="p-2 hover:bg-gray-200 hover:text-[#0019BDD9] rounded-md flex items-center gap-2 hover:cursor-pointer"
+                className="p-2 hover:bg-gray-200 hover:text-[#0019BDD9] rounded-2xl flex items-center gap-2 hover:cursor-pointer"
                 onMouseEnter={(e) =>
                   (e.currentTarget.children[0].src = Pencil2)
                 }
                 onMouseLeave={(e) => (e.currentTarget.children[0].src = Pencil)}
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
               >
                 <img
                   src={Pencil}
@@ -199,20 +256,32 @@ export default function PersonalInformation() {
             </ul>
           </div>
 
+          {/* Adding a spacer div to create space between MAIN MENU and OTHER */}
+          <div className="h-16"></div>
+
           {/* الجزء السفلي - OTHER */}
           <div className="mt-auto">
             <h2 className="font-bold text-[#00000080]">OTHER</h2>
 
             <ul className="mt-4 space-y-2">
-              <li className="p-2 hover:bg-gray-200 rounded-md flex items-center gap-2 text-[#000000B2] cursor-pointer">
+              <li
+                className="p-2 hover:bg-gray-200 rounded-md flex items-center gap-2 text-[#000000B2] cursor-pointer"
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
+              >
                 <img src={HelpChat} alt="help" className="w-5 h-5" />
                 Help Center
               </li>
-              <li className="p-2 hover:bg-gray-200 rounded-md flex items-center gap-2 text-[#000000B2] cursor-pointer">
+              <li
+                className="p-2 hover:bg-gray-200 rounded-md flex items-center gap-2 text-[#000000B2] cursor-pointer"
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
+              >
                 <img src={ResetPassword} alt="reset" className="w-5 h-5" />
                 Reset Password
               </li>
-              <li className="p-2 hover:bg-gray-200 text-[#000000B2] rounded-md flex items-center gap-2 font-semibold cursor-pointer">
+              <li
+                className="p-2 hover:bg-gray-200 text-[#000000B2] rounded-md flex items-center gap-2 font-semibold cursor-pointer"
+                onClick={() => setIsSidebarOpen(false)} // Close sidebar on link click
+              >
                 <img src={LogOut} alt="logout" className="w-5 h-5" />
                 Logout
               </li>
