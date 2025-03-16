@@ -1,215 +1,82 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import * as Yup from "yup";
+import { useFormik } from "formik";
 
-export default function ManageDepartmentsSuperAdmin() {
-  const Navigate = useNavigate();
-  const location = useLocation();
+export default function AddDepartment() {
   // State to manage sidebar visibility on small screens
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 8; // عدد الصفوف لكل صفحة
-  const [totalPages, setTotalPages] = useState(1);
-
   // Function to toggle sidebar visibility
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // State for pagination
-  const [departments, setDepartments] = useState([]);
+  const [existingDepartments, setExistingDepartments] = useState([]);
+  const navigate = useNavigate();
 
-  // ✅ دالة البحث لتحديث `searchTerm`
-  const handleSearchChange = (event) => {
-    setSearchTerm(event.target.value);
-  };
-
-  // ✅ تصفية الأقسام بناءً على البحث
-  const filteredDepartments = departments.filter((dept) =>
-    dept.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  //modal
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedDept, setSelectedDept] = useState(null);
-
-  const handleDeleteClick = (dept) => {
-    console.log("Selected for deletion:", dept); // ✅ تحقق من البيانات المختارة للحذف
-    setSelectedDept(dept);
-    setShowDeleteModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowDeleteModal(false);
-    setSelectedDept(null);
-  };
-  // ✅ استرجاع البيانات من localStorage عند التحميل
-  // دالة لجلب البيانات من الـ API أو localStorage
-  const fetchDepartments = async () => {
-    try {
-      const token = localStorage.getItem("accesstoken");
-      if (!token) throw new Error("No token found. Please log in again.");
-
-      const storedDepartments = localStorage.getItem("departments");
-      if (storedDepartments && !location.state?.refresh) {
-        const parsedDepartments = JSON.parse(storedDepartments);
-        setDepartments(parsedDepartments);
-        setTotalPages(Math.ceil(parsedDepartments.length / pageSize));
-      } else {
-        const response = await axios.get(
-          "https://educredit.runasp.net/api/Department",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        const fetchedDepartments = response.data.data || [];
-        setDepartments(fetchedDepartments);
-        setTotalPages(Math.ceil(fetchedDepartments.length / pageSize));
-
-        // حفظ البيانات في localStorage
-        localStorage.setItem("departments", JSON.stringify(fetchedDepartments));
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      alert("Failed to fetch departments. Please try again.");
-    }
-  };
   useEffect(() => {
-    fetchDepartments();
-  }, [location.state?.refresh]); // إزالة `departments.length` علشان ما يعمل تحديث غير ضروري
+    const storedDepartments =
+      JSON.parse(localStorage.getItem("departments")) || [];
+    setExistingDepartments(storedDepartments);
+  }, []);
 
-  //delete data
-  const handleConfirmDelete = async () => {
-    if (!selectedDept || !selectedDept.id) {
-      alert("No department selected for deletion.");
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("accesstoken");
-      if (!token) {
-        alert("No token found. Please log in again.");
+  const formik = useFormik({
+    initialValues: { name: "" },
+    validationSchema: Yup.object().shape({
+      name: Yup.string()
+        .matches(
+          /^[A-Za-z\s]{3,50}$/,
+          "Department name must be between 3-50 characters and contain only letters and spaces."
+        )
+        .required("Department name is required"),
+    }),
+    onSubmit: async (values) => {
+      if (
+        existingDepartments.some(
+          (dept) => dept.name?.toLowerCase() === values.name.toLowerCase()
+        )
+      ) {
+        alert("Department already exists!");
         return;
       }
 
-      await axios.delete(
-        `https://educredit.runasp.net/api/Department/${selectedDept.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      try {
+        const token = localStorage.getItem("accesstoken");
+        if (!token) throw new Error("No token found. Please log in again.");
 
-      // ✅ تحديث الأقسام بعد الحذف مباشرة
-      setDepartments((prev) =>
-        prev.filter((dept) => dept.id !== selectedDept.id)
-      );
+        const response = await axios.post(
+          "https://educredit.runasp.net/api/Department",
+          { name: values.name },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log("Fetched Departments:", response.data);
 
-      // ✅ حفظ التحديث في localStorage حتى لا يعود بعد إعادة التحميل
-      localStorage.setItem(
-        "departments",
-        JSON.stringify(
-          departments.filter((dept) => dept.id !== selectedDept.id)
-        )
-      );
+        const newDepartment = {
+          id: response.data.id || Date.now(),
+          name: values.name,
+        };
+        const updatedDepartments = [...existingDepartments, newDepartment];
+        localStorage.setItem("departments", JSON.stringify(updatedDepartments));
+        setExistingDepartments(updatedDepartments);
 
-      console.log("Department deleted successfully!");
+        // ✅ تحقق أن البيانات تم تحديثها في localStorage
+        console.log(
+          "Updated Departments in localStorage after addition:",
+          JSON.parse(localStorage.getItem("departments"))
+        );
 
-      // ✅ إغلاق المودال بعد الحذف مباشرة
-      setShowDeleteModal(false);
-      setSelectedDept(null);
-    } catch (error) {
-      console.error("Error deleting department:", error);
-      alert("Failed to delete department. Please try again.");
-    }
-  };
-
-  // استخراج البيانات الخاصة بالصفحة الحالية
-  const currentData = filteredDepartments.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize
-  );
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
+        navigate("/ManageDepartmentsSuperAdmin", {
+          state: { success: true, refresh: true },
+        });
+      } catch (error) {
+        console.error("Error adding department:", error);
+        alert("Failed to add department.");
+      }
+    },
+  });
   return (
     <div className="min-h-screen w-full bg-gradient-to-r from-[#FFF1EB] to-[#ACE0F9] flex items-center justify-center flex flex-col max-h-screen overflow-y-auto sm:overflow-y-hidden">
-      {/* ✅ نقل المودال إلى هنا ليغطي الشاشة بالكامل */}
-      {showDeleteModal && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-[3px] z-50">
-          <div className="relative p-4 w-full max-w-md max-h-full">
-            <div className="relative bg-white rounded-lg shadow-sm dark:bg-gray-700">
-              {/* زر الإغلاق */}
-              <button
-                type="button"
-                className="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8"
-                onClick={handleCloseModal}
-              >
-                ✖
-              </button>
-
-              {/* محتوى المودال */}
-              <div className="p-4 md:p-5 text-center">
-                <svg
-                  className="mx-auto mb-4 text-gray-400 w-12 h-12"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M10 11V6m0 8h.01M19 10a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  />
-                </svg>
-                <h3 className="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-                  Are you sure you want to delete{" "}
-                  <strong>{selectedDept?.name}</strong>?
-                </h3>
-                {/* زر التأكيد */}
-                <button
-                  type="button"
-                  className="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm px-5 py-2.5"
-                  onClick={handleConfirmDelete}
-                >
-                  Yes, I'm sure
-                </button>
-                {/* زر الإلغاء */}
-                <button
-                  type="button"
-                  className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-900 bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100"
-                  onClick={handleCloseModal}
-                >
-                  No, cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Hamburger Menu Button for Small Screens */}
       <button
         className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-[#0077B6] text-white rounded-md focus:outline-none"
@@ -234,7 +101,7 @@ export default function ManageDepartmentsSuperAdmin() {
         </svg>
       </button>
 
-      <div className="container mx-auto my-4 bg-[#EEF1F5] p-4 sm:p-8 rounded-xl shadow-2xl flex flex-col lg:flex-row items-stretch h-auto ">
+      <div className="container mx-auto my-4 bg-[#EEF1F5] p-4 sm:p-8 rounded-xl shadow-2xl flex flex-col lg:flex-row items-stretch h-auto">
         {/* Sidebar with Conditional Styling for Small Screens */}
         <div
           className={`w-full lg:w-1/4 bg-white p-4 rounded-2xl shadow-md text-[#000000B2] h-auto flex flex-col overflow-y-auto fixed lg:static top-0 left-0 h-full z-40 transform transition-transform duration-300 border border-[#0000004D] ${
@@ -404,11 +271,11 @@ export default function ManageDepartmentsSuperAdmin() {
               <Link
                 to="/PersonalInformationSuperAdmin"
                 className={`p-2 rounded-md flex items-center gap-2 cursor-pointer transition-all duration-300 group
-        ${
-          window.location.pathname === "/PersonalInformationSuperAdmin"
-            ? "bg-[#E6E6E6] text-[#0019BDD9]"
-            : "hover:bg-gray-200 hover:text-[#0019BDD9]"
-        }`}
+          ${
+            window.location.pathname === "/PersonalInformationSuperAdmin"
+              ? "bg-[#E6E6E6] text-[#0019BDD9]"
+              : "hover:bg-gray-200 hover:text-[#0019BDD9]"
+          }`}
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <svg
@@ -443,50 +310,27 @@ export default function ManageDepartmentsSuperAdmin() {
               <Link
                 to="/ManageDepartmentsSuperAdmin"
                 className={`p-2 rounded-md flex items-center gap-2 cursor-pointer transition-all duration-300 group
-        ${
-          window.location.pathname === "/ManageDepartmentsSuperAdmin"
-            ? "bg-[#E6E6E6] text-[#0019BDD9]"
-            : "hover:bg-gray-200 hover:text-[#0019BDD9]"
-        }`}
+  ${
+    location.pathname.includes("/ManageDepartmentsSuperAdmin") ||
+    location.pathname.includes("/AddDepartment")
+      ? " bg-[#E6E6E6] text-[#0019BDD9]" // تبويب نشط
+      : " hover:bg-gray-200 hover:text-[#0019BDD9]"
+  }`}
                 onClick={() => setIsSidebarOpen(false)}
               >
                 <svg
                   width="17"
                   height="16"
                   viewBox="0 0 17 16"
-                  fill="none"
+                  fill="currentColor"
                   xmlns="http://www.w3.org/2000/svg"
+                  className="transition-all duration-300 group-hover:text-[#0019BDD9]"
                 >
-                  <g clipPath="url(#clip0_897_633)">
-                    <path
-                      fillRule="evenodd"
-                      clipRule="evenodd"
-                      d="M0.206433 2.11421C0.206433 1.98709 0.269303 1.79104 0.545217 1.53553C0.822233 1.27902 1.26224 1.01512 1.86612 0.778596C3.06961 0.307223 4.78135 0 6.70844 0C8.63554 0 10.3473 0.307223 11.5508 0.778596C12.1547 1.01512 12.5946 1.27902 12.8716 1.53553C13.1476 1.79104 13.2105 1.98709 13.2105 2.11421C13.2105 2.24134 13.1476 2.43738 12.8716 2.69289C12.5946 2.94941 12.1547 3.2133 11.5508 3.44983C10.3473 3.9212 8.63554 4.22842 6.70844 4.22842C4.78135 4.22842 3.06961 3.9212 1.86612 3.44983C1.26224 3.2133 0.822233 2.94941 0.545217 2.69289C0.269303 2.43738 0.206433 2.24134 0.206433 2.11421ZM13.357 4.12691C12.9854 4.37681 12.5515 4.59362 12.0789 4.7787C10.6688 5.33104 8.76972 5.65699 6.70844 5.65699C4.64717 5.65699 2.74812 5.33104 1.3379 4.7787C0.865455 4.59365 0.431582 4.37687 0.0600586 4.12702V7.08063C0.105306 7.18691 0.195753 7.31815 0.366203 7.47199C0.652201 7.73013 1.10618 7.99541 1.72815 8.23293C2.96116 8.70377 4.71049 9.01099 6.67915 9.01402C6.73009 8.83223 6.80468 8.65378 6.90407 8.48278C7.49592 7.46445 8.75792 7.06922 9.81829 7.5293C9.94669 6.38763 10.9222 5.5 12.1066 5.5C12.5676 5.5 12.9969 5.63446 13.357 5.86602V4.12691ZM6.7085 10.4426L6.74821 10.4426C6.90148 10.8405 7.16712 11.1983 7.53117 11.4643C6.7329 12.0475 6.40783 13.072 6.70296 13.9939C3.03352 13.9926 0.0600586 12.7259 0.0600586 11.1654V9.0144C0.403567 9.22265 0.792598 9.4063 1.21143 9.56624C2.65362 10.117 4.59732 10.4426 6.7085 10.4426ZM12.9702 7.78571C12.9702 7.31233 12.5836 6.92857 12.1067 6.92857C11.6297 6.92857 11.2432 7.31233 11.2432 7.78571V8.63121C10.7988 8.76451 10.3983 8.99801 10.0682 9.30522L9.33013 8.88256C8.91706 8.64599 8.389 8.78663 8.15068 9.19666C7.91237 9.60671 8.05405 10.1309 8.46712 10.3674L9.20366 10.7892C9.1527 11.0061 9.12575 11.2321 9.12575 11.4643C9.12575 11.6966 9.1527 11.9225 9.20366 12.1393L8.46712 12.5611C8.05405 12.7977 7.91237 13.3218 8.15068 13.7319C8.389 14.1419 8.91706 14.2826 9.33013 14.0461L10.0682 13.6233C10.3982 13.9306 10.7988 14.1641 11.2432 14.2974V15.1429C11.2432 15.6162 11.6297 16 12.1067 16C12.5836 16 12.9702 15.6162 12.9702 15.1429V14.2975C13.4146 14.1642 13.8153 13.9307 14.1455 13.6234L14.8835 14.0461C15.2965 14.2826 15.8245 14.1419 16.0629 13.7319C16.3012 13.3218 16.1595 12.7977 15.7465 12.5611L15.01 12.1394C15.061 11.9225 15.0879 11.6966 15.0879 11.4643C15.0879 11.232 15.061 11.006 15.01 10.7892L15.7465 10.3674C16.1595 10.1309 16.3012 9.60671 16.0629 9.19666C15.8245 8.78663 15.2965 8.64599 14.8835 8.88256L14.1455 9.30518C13.8153 8.99789 13.4146 8.76437 12.9702 8.63109V7.78571ZM11.023 10.8416C11.0151 10.8552 11.0069 10.8685 10.9983 10.8816C10.9054 11.0554 10.8527 11.2538 10.8527 11.4643C10.8527 11.6749 10.9054 11.8731 10.9983 12.047C11.0068 12.06 11.0151 12.0734 11.023 12.087C11.0305 12.0999 11.0377 12.113 11.0445 12.1262C11.2657 12.4753 11.6569 12.7078 12.1028 12.7091H12.1107C12.5563 12.7079 12.947 12.4759 13.1684 12.1273C13.1755 12.1138 13.1828 12.1003 13.1906 12.087C13.1987 12.0729 13.2072 12.0592 13.216 12.0458C13.3086 11.8722 13.3609 11.6743 13.3609 11.4643C13.3609 11.2542 13.3086 11.0563 13.216 10.8827C13.2071 10.8693 13.1987 10.8556 13.1906 10.8416C13.1828 10.8283 13.1755 10.8148 13.1686 10.8013C12.9465 10.4517 12.554 10.2194 12.1068 10.2194C11.6592 10.2194 11.2664 10.4522 11.0444 10.8025C11.0377 10.8156 11.0305 10.8287 11.023 10.8416Z"
-                      fill={
-                        window.location.pathname ===
-                        "/ManageDepartmentsSuperAdmin"
-                          ? "#0019BDD9"
-                          : "black"
-                      }
-                      fillOpacity={
-                        window.location.pathname ===
-                        "/ManageDepartmentsSuperAdmin"
-                          ? "1"
-                          : "0.7"
-                      }
-                      className="group-hover:fill-[#0019BDD9] transition-all duration-300"
-                    />
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_897_633">
-                      <rect
-                        width="16.1185"
-                        height="16"
-                        fill="white"
-                        transform="translate(0.0600586)"
-                      />
-                    </clipPath>
-                  </defs>
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M0.206433 2.11421C0.206433 1.98709 0.269303 1.79104 0.545217 1.53553C0.822233 1.27902 1.26224 1.01512 1.86612 0.778596C3.06961 0.307223 4.78135 0 6.70844 0C8.63554 0 10.3473 0.307223 11.5508 0.778596C12.1547 1.01512 12.5946 1.27902 12.8716 1.53553C13.1476 1.79104 13.2105 1.98709 13.2105 2.11421C13.2105 2.24134 13.1476 2.43738 12.8716 2.69289C12.5946 2.94941 12.1547 3.2133 11.5508 3.44983C10.3473 3.9212 8.63554 4.22842 6.70844 4.22842C4.78135 4.22842 3.06961 3.9212 1.86612 3.44983C1.26224 3.2133 0.822233 2.94941 0.545217 2.69289C0.269303 2.43738 0.206433 2.24134 0.206433 2.11421ZM13.357 4.12691C12.9854 4.37681 12.5515 4.59362 12.0789 4.7787C10.6688 5.33104 8.76972 5.65699 6.70844 5.65699C4.64717 5.65699 2.74812 5.33104 1.3379 4.7787C0.865455 4.59365 0.431582 4.37687 0.0600586 4.12702V7.08063C0.105306 7.18691 0.195753 7.31815 0.366203 7.47199C0.652201 7.73013 1.10618 7.99541 1.72815 8.23293C2.96116 8.70377 4.71049 9.01099 6.67915 9.01402C6.73009 8.83223 6.80468 8.65378 6.90407 8.48278C7.49592 7.46445 8.75792 7.06922 9.81829 7.5293C9.94669 6.38763 10.9222 5.5 12.1066 5.5C12.5676 5.5 12.9969 5.63446 13.357 5.86602V4.12691ZM6.7085 10.4426L6.74821 10.4426C6.90148 10.8405 7.16712 11.1983 7.53117 11.4643C6.7329 12.0475 6.40783 13.072 6.70296 13.9939C3.03352 13.9926 0.0600586 12.7259 0.0600586 11.1654V9.0144C0.403567 9.22265 0.792598 9.4063 1.21143 9.56624C2.65362 10.117 4.59732 10.4426 6.7085 10.4426ZM12.9702 7.78571C12.9702 7.31233 12.5836 6.92857 12.1067 6.92857C11.6297 6.92857 11.2432 7.31233 11.2432 7.78571V8.63121C10.7988 8.76451 10.3983 8.99801 10.0682 9.30522L9.33013 8.88256C8.91706 8.64599 8.389 8.78663 8.15068 9.19666C7.91237 9.60671 8.05405 10.1309 8.46712 10.3674L9.20366 10.7892C9.1527 11.0061 9.12575 11.2321 9.12575 11.4643C9.12575 11.6966 9.1527 11.9225 9.20366 12.1393L8.46712 12.5611C8.05405 12.7977 7.91237 13.3218 8.15068 13.7319C8.389 14.1419 8.91706 14.2826 9.33013 14.0461L10.0682 13.6233C10.3982 13.9306 10.7988 14.1641 11.2432 14.2974V15.1429C11.2432 15.6162 11.6297 16 12.1067 16C12.5836 16 12.9702 15.6162 12.9702 15.1429V14.2975C13.4146 14.1642 13.8153 13.9307 14.1455 13.6234L14.8835 14.0461C15.2965 14.2826 15.8245 14.1419 16.0629 13.7319C16.3012 13.3218 16.1595 12.7977 15.7465 12.5611L15.01 12.1394C15.061 11.9225 15.0879 11.6966 15.0879 11.4643C15.0879 11.232 15.061 11.006 15.01 10.7892L15.7465 10.3674C16.1595 10.1309 16.3012 9.60671 16.0629 9.19666C15.8245 8.78663 15.2965 8.64599 14.8835 8.88256L14.1455 9.30518C13.8153 8.99789 13.4146 8.76437 12.9702 8.63109V7.78571ZM11.023 10.8416C11.0151 10.8552 11.0069 10.8685 10.9983 10.8816C10.9054 11.0554 10.8527 11.2538 10.8527 11.4643C10.8527 11.6749 10.9054 11.8731 10.9983 12.047C11.0068 12.06 11.0151 12.0734 11.023 12.087C11.0305 12.0999 11.0377 12.113 11.0445 12.1262C11.2657 12.4753 11.6569 12.7078 12.1028 12.7091H12.1107C12.5563 12.7079 12.947 12.4759 13.1684 12.1273C13.1755 12.1138 13.1828 12.1003 13.1906 12.087C13.1987 12.0729 13.2072 12.0592 13.216 12.0458C13.3086 11.8722 13.3609 11.6743 13.3609 11.4643C13.3609 11.2542 13.3086 11.0563 13.216 10.8827C13.2071 10.8693 13.1987 10.8556 13.1906 10.8416C13.1828 10.8283 13.1755 10.8148 13.1686 10.8013C12.9465 10.4517 12.554 10.2194 12.1068 10.2194C11.6592 10.2194 11.2664 10.4522 11.0444 10.8025C11.0377 10.8156 11.0305 10.8287 11.023 10.8416Z"
+                  />
                 </svg>
                 Manage Departments
               </Link>
@@ -709,190 +553,47 @@ export default function ManageDepartmentsSuperAdmin() {
           </div>
         </div>
 
-        <div className="tableInformaion w-full lg:w-3/4 bg-white p-4 sm:p-6 mt-4 lg:mt-0 lg:ml-4 rounded-2xl shadow-md flex flex-col overflow-y-auto  border border-[#0000004D]">
-          {/* ✅ صندوق البحث */}
-          <div className="relative w-full bg-[#DCDCDCB2] p-4 rounded-lg shadow-md">
-            <div className="flex items-center bg-white rounded-full shadow-md px-4 py-2">
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+        <div className="w-full lg:w-3/4 bg-white p-4 sm:p-6 mt-4 lg:mt-0 lg:ml-4 rounded-2xl shadow-md flex flex-col overflow-y-auto border border-[#0000004D] min-h-full">
+          <div>
+            <h1 className="text-3xl">
+              <span className="font-bold">Add</span> New Department
+            </h1>
+            <div className="bg-black w-[57px] h-[3px]"></div>
+          </div>
+          <form
+            onSubmit={formik.handleSubmit}
+            className="mt-10 h-full flex flex-col"
+          >
+            <div className="mb-5 flex-grow">
+              <label
+                htmlFor="name"
+                className="block mb-2 text-sm font-medium text-gray-900"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                ></path>
-              </svg>
+                Department Name
+              </label>
               <input
                 type="text"
-                placeholder="Search"
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="ml-2 w-full bg-transparent outline-none text-gray-700 placeholder-[#000000]"
+                id="name"
+                name="name"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="border border-[#00B0D8] text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                required
               />
+              {formik.touched.name && formik.errors.name ? (
+                <p className="text-red-500 text-sm mt-1">
+                  {formik.errors.name}
+                </p>
+              ) : null}
             </div>
-          </div>
-          {/* Add New Department Section */}
-          <div
-            className="mt-4 flex justify-between items-center bg-[#CAF0F8] px-4 py-2 rounded-full shadow-md md:w-1/2 w-full"
-            onClick={() => Navigate("/AddDepartment")}
-          >
-            <span className="text-gray-800 font-medium">
-              Add New Department
-            </span>
-            <button className="ml-2 border-2 border-black rounded-full p-1 shadow-md cursor-pointer">
-              <svg
-                className="w-5 h-5 text-black"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 4v16m8-8H4"
-                ></path>
-              </svg>
-            </button>
-          </div>
-          {/* ✅ جدول عرض الأقسام */}
-          <table className="mt-4 tableInformaion md:w-full w-[600px] border border-[#0077B6] rounded-xl scroll-hide bg-white ">
-            <thead>
-              <tr className="bg-[#ACE0F9] rounded-t-lg border border-[#0077B6]">
-                <th className="p-2 text-sm sm:text-base font-bold border-r border-[#0077B6]">
-                  #
-                </th>
-                <th className="p-2 text-sm sm:text-base font-bold border-r border-[#0077B6]">
-                  Departments
-                </th>
-                <th className="p-2 text-sm sm:text-base font-bold border-r border-[#0077B6]">
-                  Department Head
-                </th>
-                <th className="p-2 text-sm sm:text-base font-bold">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentData.length > 0 ? (
-                currentData.map((dept, index) => (
-                  <tr key={dept.id} className="border border-[#0077B6]">
-                    <td className="p-2 text-center border border-[#0077B6]">
-                      {(currentPage - 1) * pageSize + index + 1}
-                    </td>
-                    <td className="p-2 border border-[#0077B6]">{dept.name}</td>
-                    <td className="p-2 text-center border border-[#0077B6]">
-                      {dept.departmentHeadFullName || "N/A"}
-                    </td>
-                    <td className="p-2 text-center border border-[#0077B6]">
-                      <div className="flex justify-center space-x-4">
-                        <i className="fa-solid fa-pen-to-square cursor-pointer hover:text-[#FFBB00]"></i>
-                        <i
-                          className="fa-solid fa-trash cursor-pointer hover:text-[#FF0000]"
-                          onClick={() => handleDeleteClick(dept)}
-                        ></i>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="text-center p-4 text-gray-500">
-                    No departments found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-          {/* modal to sure delete */}
-
-          {/* Pagination (يبقى دائمًا في الأسفل) */}
-          <div className="flex justify-center items-center md:mt-auto mt-6 gap-2 ">
             <button
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-              className={`flex items-center gap-1 px-4 py-2 text-sm ${
-                currentPage === 1
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-[#0077B6] hover:text-blue-700"
-              }`}
+              type="submit"
+              className="text-white bg-[#00B0D8] focus:ring-4 focus:outline-none focus:ring-[#00B0D8] font-medium rounded-3xl text-sm w-full sm:w-auto px-11 py-2.5 text-center block ms-auto font-medium cursor-pointer"
             >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M15 19l-7-7 7-7"
-                ></path>
-              </svg>
-              Previous
+              Submit
             </button>
-
-            {[...Array(totalPages)].map((_, index) => {
-              const page = index + 1;
-              if (
-                page === 1 ||
-                page === totalPages ||
-                (page >= currentPage - 1 && page <= currentPage + 1)
-              ) {
-                return (
-                  <button
-                    key={page}
-                    onClick={() => handlePageChange(page)}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full text-sm ${
-                      currentPage === page
-                        ? "bg-[#0077B6] text-white"
-                        : "text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                );
-              }
-              return null;
-            })}
-
-            {totalPages > 3 && currentPage < totalPages - 1 && (
-              <span className="text-gray-500">...</span>
-            )}
-
-            <button
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-              className={`flex items-center gap-1 px-4 py-2 text-sm ${
-                currentPage === totalPages
-                  ? "text-gray-400 cursor-not-allowed"
-                  : "text-[#0077B6] hover:text-blue-700"
-              }`}
-            >
-              Next
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M9 5l7 7-7 7"
-                ></path>
-              </svg>
-            </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>

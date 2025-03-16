@@ -1,0 +1,20 @@
+.tableInformaion{
+     scrollbar-width: none !important;
+
+      scroll-snap-type: none;
+      overflow-x: hidden;
+      
+
+
+}
+.tableInformaion::-webkit-scrollbar {
+     display: none !important;
+}
+.scrollbar-hide::-webkit-scrollbar {
+     display: none;
+}
+
+/* Hide scrollbar for Firefox */
+.scrollbar-hide {
+     scrollbar-width: none
+     ;}

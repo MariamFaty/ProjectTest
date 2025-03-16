@@ -20,6 +20,7 @@ import ManageTeachersSuperAdmin from "./Pages/SuperAdminInformation/ManageTeache
 import ManageStudentsSuperAdmin from "./Pages/SuperAdminInformation/ManageStudentsSuperAdmin/ManageStudentsSuperAdmin";
 import PersonalInformationTeacher from "./Pages/TeacherInformation/PersonalInformationTeacher/PersonalInformationTeacher";
 import PersonalInformationAdmin from "./Pages/AdminInformation/PersonalInformationAdmin/PersonalInformationAdmin";
+import AddDepartment from "./components/AddDepartment/AddDepartment";
 
 function App() {
   const router = createBrowserRouter([
@@ -174,6 +175,14 @@ function App() {
       element: (
         // <ProtectedRoute>
         <ManageStudentsSuperAdmin />
+        // </ProtectedRoute>
+      ),
+    },
+    {
+      path: "/AddDepartment",
+      element: (
+        // <ProtectedRoute>
+        <AddDepartment />
         // </ProtectedRoute>
       ),
     },
