@@ -12,7 +12,7 @@ import ResetPassword from "../../../../src/assets/images/ImagesHome/Password 01.
 import LogOut from "../../../../src/assets/images/ImagesHome/Logout.png";
 import { Link } from "react-router-dom";
 import axios from "axios";
-
+import { fetchUserData } from "../../../service/fetcgUserData.service";
 export default function PersonalInformationAdmin() {
   const [userData, setUserData] = useState({
     name: "",
@@ -27,61 +27,15 @@ export default function PersonalInformationAdmin() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      setLoading(true);
-      setError(null);
+    const loadDepartments = async () => {
       try {
-        const token =
-          localStorage.getItem("accesstoken") || authContextaccessToken;
-        if (!token) {
-          throw new Error("No token found. Please log in again.");
-        }
-
-        // جلب البيانات باستخدام Axios
-        const response = await axios.get(
-          "https://educredit.runasp.net/api/User/GetUserInfo",
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        console.log("Fetched Data:", response.data);
-
-        // تحديث البيانات
-        setUserData({
-          name: response.data.name || "",
-          phoneNumber: response.data.phoneNumber || "",
-          gender: response.data.gender || "",
-          email: response.data.email || "",
-          birthDate: response.data.birthDate || "",
-          address: response.data.address || "",
-          nationalId: response.data.nationalId || "",
-        });
+        const data = await fetchUserData();
+        console.log(data);
       } catch (error) {
-        // معالجة الأخطاء
-        if (error.response) {
-          // الـ API أرجع استجابة مع خطأ (مثل 401 Unauthorized)
-          setError(
-            `Error ${error.response.status}: ${
-              error.response.data.message || "Failed to fetch user data"
-            }`
-          );
-        } else if (error.request) {
-          // لم يتم تلقي استجابة من الـ API (مشكلة في الشبكة)
-          setError("Network error: Could not reach the server.");
-        } else {
-          // أخطاء أخرى (مثل خطأ في الكود)
-          setError(error.message);
-        }
-        console.error("Error fetching user data:", error);
-      } finally {
-        setLoading(false);
+        alert("Failed to fetch departments. Please try again.");
       }
     };
-
-    fetchUserData();
+    loadDepartments();
   }, []);
 
   if (loading) return <div className="text-center p-4">Loading...</div>;

@@ -178,12 +178,4 @@ function App() {
       ),
     },
   ]);
-
-  return (
-    <AuthContextProvider>
-      <RouterProvider router={router} />
-    </AuthContextProvider>
-  );
 }
-
-export default App;

@@ -40,6 +40,7 @@ export default function LoginStudent() {
       );
       console.log("API Response:", res.data);
       setIsLoading(false);
+
       navigate("/PersonalInformation");
       localStorage.setItem("accesstoken", res.data.accessToken);
       localStorage.setItem("refreshtoken", res.data.refreshToken);
